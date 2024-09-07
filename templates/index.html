@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Tobby</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: url('/static/med.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+            position: relative;
+        }
+        #chat-container {
+            width: 400px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            border: 1px solid #ddd;
+            position: relative;
+            z-index: 1; /* Ensure chat container is above the background */
+        }
+        #chat-header {
+            background-color: #6a1b9a; /* Purple background */
+            color: #fff;
+            padding: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-bottom: 1px solid #4a148c; /* Darker purple border */
+        }
+        #chat-box {
+            height: 600px; /* Adjust the height as needed */
+            overflow-y: auto; /* Enable vertical scrolling */
+            padding: 15px;
+            background-color: #f5f5f5; /* Light gray background */
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        #user-input {
+            width: calc(100% - 120px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px;
+            box-sizing: border-box;
+        }
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff; /* Blue background */
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            background: #e9ecef; /* Light gray background for messages */
+            max-width: 80%;
+            display: inline-block;
+        }
+        .message.user {
+            background: #d4edda; /* Light green for user messages */
+            align-self: flex-end;
+        }
+        .message.bot {
+            background: #cce5ff; /* Light blue for bot messages */
+            align-self: flex-start;
+        }
+        .message.system {
+            background: #fff3cd; /* Light yellow for system messages */
+            align-self: center;
+            color: #856404; /* Darker yellow text */
+        }
+        /* Add some margin to the bottom of the input area */
+        #chat-form {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">Chat with healthcare Tobby</div>
+        <div id="chat-box"></div>
+        <form id="chat-form" onsubmit="event.preventDefault(); sendMessage();">
+            <input type="text" id="user-input" placeholder="Type your message here" autocomplete="off">
+            <button type="submit">Send</button>
+        </form>
+    </div>
+    <script>
+        function sendMessage() {
+            const userMessage = document.getElementById('user-input').value;
+            if (userMessage.trim() === '') return;
+
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div class="message user"><strong>You:</strong> ${userMessage}</div>`;
+
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `message=${encodeURIComponent(userMessage)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatBox.innerHTML += `<div class="message bot"><strong>Tobby:</strong> ${data.response}</div>`;
+                document.getElementById('user-input').value = '';
+                chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                chatBox.innerHTML += `<div class="message system"><strong>System:</strong>error while processing your request.</div>`;
+                document.getElementById('user-input').value = '';
+                chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+            });
+        }
+
+        // Function to handle Enter key press
+        document.getElementById('user-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Prevent default behavior (e.g., form submission)
+                sendMessage(); // Send the message
+            }
+
+        });
+    </script>
+</body>
+</html>
